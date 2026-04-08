@@ -1,6 +1,6 @@
 const path = require("path");
 const fs = require("fs");
-const manager = require("flows-file-manager");
+const manager = require("./flows-file-manager");
 const eol = require("eol");
 
 /**

@@ -27,7 +27,8 @@
   },
   "dependencies": {
     "eol": "^0.10.0",
-    "flows-file-manager": "^0.2.0"
+    "@node-red/flow-parser": "1.0.2",
+    "js-yaml": "^4.1.1"
   },
   "node-red": {
     "plugins": {
