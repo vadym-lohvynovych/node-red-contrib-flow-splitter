@@ -31,7 +31,7 @@ const DEFAULT_CFG = {
 };
 
 function writeSplitterConfig(cfg, projectPath) {
-  RED.log.info("[node-red-contrib-flow-splitter] Writing new config");
+  RED.log.info("[flow-splitter] Writing new config");
   try {
     const splitterCfgToWrite = JSON.parse(JSON.stringify(cfg));
     delete splitterCfgToWrite.monolithFilename;
@@ -41,7 +41,7 @@ function writeSplitterConfig(cfg, projectPath) {
     );
   } catch (error) {
     RED.log.warn(
-      `[node-red-contrib-flow-splitter] Could not write splitter config '${splitCfgFilename}': ${error}`,
+      `[flow-splitter] Could not write splitter config '${splitCfgFilename}': ${error}`,
     );
   } finally {
     return;
@@ -55,12 +55,10 @@ module.exports = function (REDRuntime) {
   RED = REDRuntime;
 
   // We register the pluggin for NodeRed
-  RED.plugins.registerPlugin("node-red-contrib-flow-splitter", {
+  RED.plugins.registerPlugin("flow-splitter", {
     type: "exotec-deploy-plugins",
     onadd: function () {
-      RED.log.info(
-        "[node-red-contrib-flow-splitter] Initialized plugin successfully",
-      );
+      RED.log.info("[flow-splitter] Initialized plugin successfully");
     },
   });
 
@@ -74,8 +72,9 @@ module.exports = function (REDRuntime) {
  * @returns {void}
  */
 async function onFlowReload(flowEventData) {
-  RED.log.info("[node-red-contrib-flow-splitter] Flow restart event");
+  RED.log.info("[flow-splitter] Flow restart event");
 
+  const userDir = path.join(RED.settings.userDir);
   let projectPath = userDir;
 
   if (fs.existsSync(path.join(userDir || ".", ".config.projects.json"))) {
@@ -92,9 +91,7 @@ async function onFlowReload(flowEventData) {
   let currentProjectSplitterCfg;
   let flowSet;
 
-  RED.log.info(
-    "[node-red-contrib-flow-splitter] Fetching current splitter config",
-  );
+  RED.log.info("[flow-splitter] Fetching current splitter config");
   currentProjectSplitterCfg = DEFAULT_CFG;
   if (fs.existsSync(path.join(projectPath, splitCfgFilename))) {
     currentProjectSplitterCfg = JSON.parse(
@@ -111,7 +108,7 @@ async function onFlowReload(flowEventData) {
     // The script will rebuilt the flows from the split source files and push the resulting flow file to RED runtime.
 
     RED.log.info(
-      "[node-red-contrib-flow-splitter] Rebuilding monolith file from splitter config and source files",
+      "[flow-splitter] Rebuilding monolith file from splitter config and source files",
     );
     flowSet = manager.constructFlowSetFromTreeFiles(
       currentProjectSplitterCfg || DEFAULT_CFG,
@@ -120,7 +117,7 @@ async function onFlowReload(flowEventData) {
 
     if (!flowSet) {
       RED.log.error(
-        "[node-red-contrib-flow-splitter] Cannot build FlowSet from source tree files",
+        "[flow-splitter] Cannot build FlowSet from source tree files",
       );
       return;
     }
@@ -147,12 +144,10 @@ async function onFlowReload(flowEventData) {
       return require("node-red");
     })();
 
-    RED.log.info("[node-red-contrib-flow-splitter] Stopping and loading nodes");
+    RED.log.info("[flow-splitter] Stopping and loading nodes");
 
     PRIVATE_RED.nodes.loadFlows(true).then(function () {
-      RED.log.info(
-        "[node-red-contrib-flow-splitter] Flows are rebuilt and available",
-      );
+      RED.log.info("[flow-splitter] Flows are rebuilt and available");
     });
     return;
   } else {
@@ -176,7 +171,7 @@ async function onFlowReload(flowEventData) {
       fs.unlinkSync(path.join(projectPath, RED.settings.flowFile));
     } catch (error) {
       RED.log.warn(
-        `[node-red-contrib-flow-splitter] Cannot erase file '${RED.settings.flowFile}'`,
+        `[flow-splitter] Cannot erase file '${RED.settings.flowFile}'`,
       );
     } finally {
       return;
