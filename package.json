@@ -23,13 +23,15 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/vadym-lohvynovych/node-red-contrib-flow-splitter"
+    "url": "git+https://github.com/vadym-lohvynovych/node-red-contrib-flow-splitter.git"
   },
   "dependencies": {
     "eol": "^0.10.0",
-    "flows-file-manager": "^0.2.0"
+    "flows-file-manager": "^0.2.0",
+    "node-red": "^4.1.0"
   },
   "node-red": {
+    "version": ">=4.1.0",
     "plugins": {
       "my-node-red-contrib-flow-splitter": "index.js"
     }
