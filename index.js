@@ -74,15 +74,14 @@ module.exports = function (REDRuntime) {
 async function onFlowReload(flowEventData) {
     RED.log.info("[node-red-contrib-flow-splitter] Flow restart event")
 
-    const userDir = path.join(RED.settings.userDir)
+    let projectPath = userDir;
 
-    if (!fs.existsSync(path.join(userDir || '.', '.config.projects.json'))) {
-        RED.log.error("[node-red-contrib-flow-splitter] Cannot find '.config.projects.json' file, the package may have been install in the wrong package.json")
-        return
+    if (fs.existsSync(path.join(userDir || ".", ".config.projects.json"))) {
+        const nrProjectsCfg = JSON.parse(
+            fs.readFileSync(path.join(userDir, ".config.projects.json")),
+        );
+        projectPath = nrProjectsCfg.activeProject ? path.join(userDir, "projects", nrProjectsCfg.activeProject) : userDir;
     }
-
-    const nrProjectsCfg = JSON.parse(fs.readFileSync(path.join(userDir, '.config.projects.json')))
-    const projectPath = path.join(userDir, 'projects', nrProjectsCfg.activeProject)
 
     DEFAULT_CFG.monolithFilename = RED.settings.flowFile
 
