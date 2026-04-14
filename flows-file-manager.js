@@ -16,7 +16,10 @@ const eol = require("eol");
 function normalizeString(stringElement) {
   let normalized = stringElement
     .replace(/[^a-zA-Z0-9\.]/g, "-")
-    .replace(/-{2,}/g, "-")
+    .replace(/----/g, "-")
+    .replace(/---/g, "-")
+    .replace(/--/g, "-")
+    .replace(/--/g, "-")
     .toLowerCase();
   if (normalized[0] === "-") {
     normalized = normalized.substring(1, normalized.length);
@@ -190,12 +193,12 @@ function constructFlowSetFromMonolithFile(filePath) {
     return;
   }
   try {
-    const flowConfig = JSON.parse(fs.readFileSync(path.join(filePath)));
-    return constructFlowSetFromMonolithObject(flowConfig);
+    flowConfig = JSON.parse(fs.readFileSync(path.join(filePath)));
   } catch (error) {
     console.log(`Failed returning/parsing file : ${error}`);
     return;
   }
+  return constructFlowSetFromMonolithObject(flowConfig);
 }
 
 /**
@@ -264,12 +267,19 @@ function constructTreeObjectFromFlowSet(flowSet) {
 function constructTreeFilesFromFlowSet(flowSet, config, rootProjectPath = ".") {
   // Check the config
   if (
+    !config.fileFormat ||
     !config.destinationFolder ||
     !Object.keys(config).includes("tabsOrder") ||
     !config.monolithFilename
   ) {
     console.log(
       `Erroneous config file, missing key element in the JSON : ${config}`,
+    );
+    return;
+  }
+  if (!/^json|yaml|yml$/.test(config.fileFormat.toLowerCase())) {
+    console.log(
+      `Unexpected file format : ' ${config.fileFormat}'. Allowed formats are JSON and YAML.`,
     );
     return;
   }
@@ -282,14 +292,14 @@ function constructTreeFilesFromFlowSet(flowSet, config, rootProjectPath = ".") {
     // Then dump and write the files
     let data;
     tree.forEach((element) => {
-      data = forgeDumpData(element.content, "yaml");
+      data = forgeDumpData(element.content, config.fileFormat.toLowerCase());
       try {
         fs.writeFileSync(
           path.join(
             rootProjectPath,
             config.destinationFolder,
             `./${element.folder}/`,
-            `${element.fileName}.yaml`,
+            `${element.fileName}.${config.fileFormat}`,
           ),
           data,
         );
@@ -320,6 +330,7 @@ function constructMonolithObjectFromFlowSet(
   overwriteTabsOrder = false,
 ) {
   if (
+    !config.fileFormat ||
     !config.destinationFolder ||
     !Object.keys(config).includes("tabsOrder") ||
     !config.monolithFilename
@@ -338,7 +349,7 @@ function constructMonolithObjectFromFlowSet(
     return reorderTabs(flowConfig, config.tabsOrder);
   }
 
-  return flowConfig;
+  return flowSet.export();
 }
 
 /**
@@ -400,12 +411,19 @@ function constructFlowSetFromTreeObject(tree, config) {
 function constructFlowSetFromTreeFiles(config, rootProjectPath) {
   // Check the config
   if (
+    !config.fileFormat ||
     !config.destinationFolder ||
     !Object.keys(config).includes("tabsOrder") ||
     !config.monolithFilename
   ) {
     console.log(
       `Erroneous config file, missing key element in the JSON : ${config}`,
+    );
+    return;
+  }
+  if (!/^json|yaml|yml$/.test(config.fileFormat.toLowerCase())) {
+    console.log(
+      `Unexpected file format (it should be JSON or YAML exclusively) : ${config.fileFormat}`,
     );
     return;
   }
@@ -424,7 +442,10 @@ function constructFlowSetFromTreeFiles(config, rootProjectPath) {
     fs.readdirSync(
       path.join(rootProjectPath || ".", config.destinationFolder, nodeType),
     ).forEach((filename) => {
-      if (!filename.endsWith(".yaml")) {
+      if (
+        filename.substring(filename.length - config.fileFormat.length) !==
+        config.fileFormat
+      ) {
         console.log(
           `Unexpected file in the '${config.destinationFolder}' folder : ${filename}`,
         );
@@ -443,9 +464,13 @@ function constructFlowSetFromTreeFiles(config, rootProjectPath) {
       let data = fs.readFileSync(treeFilePath);
       let flowObj = null;
       try {
-        flowObj = yaml.load(data);
+        if (config.fileFormat.toLowerCase() == "json") {
+          flowObj = JSON.parse(data);
+        } else {
+          flowObj = yaml.load(data);
+        }
       } catch (error) {
-        console.log(`Can not YAML parse '${filename}'`);
+        console.log(`Can not JSON/YAML parse '${filename}'`);
       }
       if (flowObj) {
         flowObj.forEach((node) => {
