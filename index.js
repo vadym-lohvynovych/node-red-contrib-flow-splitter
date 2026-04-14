@@ -24,16 +24,19 @@ let RED;
 
 const CONFIG_FILE_NAME = ".config.flow-splitter.json";
 const DEFAULT_CFG = {
+  fileFormat: "yaml",
   destinationFolder: "src",
   tabsOrder: [],
   monolithFilename: "flows.json",
 };
+
 /**
  * @param {REDType} REDRuntime
  */
 module.exports = function (REDRuntime) {
   RED = REDRuntime;
 
+  // We register the pluggin for NodeRed
   RED.plugins.registerPlugin("flow-splitter", {
     type: "exotec-deploy-plugins",
     onadd: function () {
@@ -46,8 +49,9 @@ module.exports = function (REDRuntime) {
 };
 
 /**
- * Main handler executed on each flow restart (boot or deploy event).
+ * Main function. To be executed on each flow restart
  * @param {FlowStartedEventType} flowEventData
+ * @returns {void}
  */
 async function onFlowReload(flowEventData) {
   RED.log.info("[flow-splitter] Flow restart event");
